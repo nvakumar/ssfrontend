@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+// src/components/CreateCastingCallModal.tsx
+>>>>>>> fa3c2a3 (refactor: remove default React import, use hooks-only imports in all components and pages)
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';

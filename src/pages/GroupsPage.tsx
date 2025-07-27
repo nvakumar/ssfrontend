@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { Link } from 'react-router-dom';
+=======
+import api from '../services/api';
+>>>>>>> fa3c2a3 (refactor: remove default React import, use hooks-only imports in all components and pages)
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Header from '../components/Header';

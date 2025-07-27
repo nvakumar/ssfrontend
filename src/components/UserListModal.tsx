@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import { useEffect } from 'react';
+=======
+>>>>>>> fa3c2a3 (refactor: remove default React import, use hooks-only imports in all components and pages)
 import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 

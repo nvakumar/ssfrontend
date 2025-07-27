@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
+<<<<<<< HEAD
 import { ThumbsUp, MessageCircle, Share2, Trash2, Edit, MoreVertical, X } from 'lucide-react';
+=======
+import { ThumbsUp, MessageCircle, Share2, Trash2, Edit, MoreVertical } from 'lucide-react';
+>>>>>>> fa3c2a3 (refactor: remove default React import, use hooks-only imports in all components and pages)
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';

@@ -3,7 +3,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import Header from '../components/Header';
 import LeftSidebar from '../components/LeftSidebar';
-import { Bell, User, Briefcase } from 'lucide-react'; // Icons for notification types
+import { Bell, Briefcase } from 'lucide-react'; // Icons for notification types
 
 // Define the shape of the Notification data we expect from the API
 interface Applicant {

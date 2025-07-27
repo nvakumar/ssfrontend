@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
@@ -252,7 +252,6 @@ const ProfilePage = () => {
               {isOnLeaderboard && (
                 <div 
                   className="absolute bottom-0 right-0 transform translate-x-1/4 translate-y-1/4 bg-yellow-500 rounded-full p-2 border-2 border-gray-900 shadow-lg"
-                  title="On Leaderboard!"
                 >
                   <Award size={24} className="text-white" />
                 </div>
@@ -262,7 +261,7 @@ const ProfilePage = () => {
               <h1 className="text-3xl md:text-4xl font-bold flex items-center justify-center md:justify-start">
                 {profile.fullName}
                 {isOnLeaderboard && (
-                  <Award size={24} className="ml-3 text-yellow-400" title="Top Talent!" />
+                  <Award size={24} className="ml-3 text-yellow-400" />
                 )}
               </h1>
               <p className="text-lg text-indigo-400">{profile.role}</p>

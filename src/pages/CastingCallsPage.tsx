@@ -45,8 +45,17 @@ const CastingCallsPage = () => {
       const response = await api.get<CastingCall[]>('/api/casting-calls', {
         headers: { Authorization: `Bearer ${token}` },
       });
+<<<<<<< HEAD
       setCastingCalls(response.data);
     } catch (err: unknown) {
+=======
+      // Ensure contactEmail is always a string
+      setCastingCalls(response.data.map((call: any) => ({
+        ...call,
+        contactEmail: call.contactEmail || "",
+      })));
+    } catch (err: any) { // Catch error explicitly
+>>>>>>> fa3c2a3 (refactor: remove default React import, use hooks-only imports in all components and pages)
       console.error("Failed to fetch casting calls:", err);
       if (err instanceof Error) {
         setError(err.message);

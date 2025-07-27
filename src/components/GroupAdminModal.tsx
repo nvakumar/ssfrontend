@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { X, UserX, ShieldAlert, Trash2, Loader2, Users } from 'lucide-react';
+=======
+import api from '../services/api';
+import { X, UserX, ShieldAlert, Trash2, Loader2, Users } from 'lucide-react'; // Added Loader2, Users
+>>>>>>> fa3c2a3 (refactor: remove default React import, use hooks-only imports in all components and pages)
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 

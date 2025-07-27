@@ -35,7 +35,7 @@ const LeftSidebar = () => {
         )}
 
         {/* Main Navigation */}
-        <nav className="space-y-2" aria-label="Main Navigation">
+        <nav className="space-y-2">
           <NavLink
             to="/feed"
             aria-label="Home"
@@ -44,7 +44,6 @@ const LeftSidebar = () => {
                 isActive ? 'bg-indigo-700 text-white' : 'text-gray-300 hover:bg-gray-700'
               }`
             }
-            aria-current={({ isActive }) => (isActive ? 'page' : undefined)}
           >
             <Home size={20} /> <span>Home</span>
           </NavLink>
@@ -57,7 +56,6 @@ const LeftSidebar = () => {
                 isActive ? 'bg-indigo-700 text-white' : 'text-gray-300 hover:bg-gray-700'
               }`
             }
-            aria-current={({ isActive }) => (isActive ? 'page' : undefined)}
           >
             <Briefcase size={20} /> <span>Casting Calls</span>
           </NavLink>
@@ -70,7 +68,6 @@ const LeftSidebar = () => {
                 isActive ? 'bg-indigo-700 text-white' : 'text-gray-300 hover:bg-gray-700'
               }`
             }
-            aria-current={({ isActive }) => (isActive ? 'page' : undefined)}
           >
             <MessageSquare size={20} /> <span>Messages</span>
           </NavLink>
@@ -83,20 +80,40 @@ const LeftSidebar = () => {
                 isActive ? 'bg-indigo-700 text-white' : 'text-gray-300 hover:bg-gray-700'
               }`
             }
-            aria-current={({ isActive }) => (isActive ? 'page' : undefined)}
           >
             <Users size={20} /> <span>Groups</span>
           </NavLink>
 
-          <NavLink
-            to="/settings"
-            aria-label="Settings"
-            className={({ isActive }) =>
+          {/* Removed Discover NavLink as per earlier request */}
+          {/* <NavLink 
+            to="/search" 
+            className={({ isActive }: { isActive: boolean }) => 
               `flex items-center space-x-3 p-3 rounded-lg transition-colors duration-200 ${
                 isActive ? 'bg-indigo-700 text-white' : 'text-gray-300 hover:bg-gray-700'
               }`
             }
-            aria-current={({ isActive }) => (isActive ? 'page' : undefined)}
+          >
+            <Search size={20} /> <span>Discover</span>
+          </NavLink> */}
+          {/* Removed Leaderboard NavLink as per earlier request */}
+          {/* <NavLink 
+            to="/leaderboard" 
+            className={({ isActive }: { isActive: boolean }) => 
+              `flex items-center space-x-3 p-3 rounded-lg transition-colors duration-200 ${
+                isActive ? 'bg-indigo-700 text-white' : 'text-gray-300 hover:bg-gray-700'
+              }`
+            }
+          >
+            <Award size={20} /> <span>Leaderboard</span>
+          </NavLink> */}
+          {/* Settings NavLink */}
+          <NavLink 
+            to="/settings" 
+            className={({ isActive }: { isActive: boolean }) => 
+              `flex items-center space-x-3 p-3 rounded-lg transition-colors duration-200 ${
+                isActive ? 'bg-indigo-700 text-white' : 'text-gray-300 hover:bg-gray-700'
+              }`
+            }
           >
             <Settings size={20} /> <span>Settings</span>
           </NavLink>

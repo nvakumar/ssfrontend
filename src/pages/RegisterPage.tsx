@@ -1,4 +1,4 @@
-import React, { useState } from 'react'; // Keep React import for useState
+import { useState } from 'react'; // Only import useState from React
 import api from '../services/api';
 import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react'; // Added Loader2 icon

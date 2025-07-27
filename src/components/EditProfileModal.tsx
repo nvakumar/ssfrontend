@@ -8,6 +8,7 @@ interface UserProfileData {
   skills: string[];
   profilePictureUrl: string;
   resumeUrl: string;
+  location?: string;
 }
 
 type EditProfileModalProps = {
