@@ -16,6 +16,7 @@ interface PostAuthor {
   avatar?: string;
   profilePictureUrl?: string;
 }
+
 interface Post {
   _id: string;
   user: PostAuthor;
@@ -28,6 +29,7 @@ interface Post {
   reactions: any[];
   group?: { _id: string; admin: string };
 }
+
 interface GroupMember {
   _id: string;
   fullName: string;
@@ -60,6 +62,7 @@ const GroupDetailPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
+  // Fetch group details
   const fetchGroupDetails = useCallback(async () => {
     if (!groupId || !token) return;
     setIsLoading(true);
@@ -156,15 +159,18 @@ const GroupDetailPage = () => {
   const handlePostDeleted = (deletedPostId: string) => {
     setPosts(posts => posts.filter(p => p._id !== deletedPostId));
   };
+
   const handlePostUpdated = (updatedPost: Post) => {
     setPosts(posts => posts.map(p => (p._id === updatedPost._id ? updatedPost : p)));
   };
+
   const handleGroupUpdated = (updatedGroup: GroupDetails) => {
     setGroup(updatedGroup);
     if (updatedGroup.isPrivate !== group?.isPrivate) {
       fetchGroupPosts();
     }
   };
+
   const handleGroupDeleted = (deletedGroupId: string) => {
     console.log(`Group ${deletedGroupId} deleted.`);
     navigate('/groups');
@@ -177,6 +183,7 @@ const GroupDetailPage = () => {
       </div>
     );
   }
+
   if (error) {
     return (
       <div className="bg-gray-900 min-h-screen text-white flex items-center justify-center">
@@ -184,6 +191,7 @@ const GroupDetailPage = () => {
       </div>
     );
   }
+
   if (!group) {
     return (
       <div className="bg-gray-900 min-h-screen text-white flex items-center justify-center">
@@ -236,6 +244,7 @@ const GroupDetailPage = () => {
             </div>
           )}
         </div>
+
         <main className="container px-4 py-6 mx-auto">
           <div className="flex flex-col gap-6 md:flex-row">
             <LeftSidebar />
@@ -257,7 +266,7 @@ const GroupDetailPage = () => {
                       post={post}
                       onPostDeleted={handlePostDeleted}
                       onPostUpdated={handlePostUpdated}
-                      // groupAdminId={group.admin} // Only add if PostCard type supports it
+                      // groupAdminId={group.admin} // uncomment if PostCard expects this prop
                     />
                   ))
                 ) : (
