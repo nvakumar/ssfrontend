@@ -24,7 +24,7 @@ interface Message {
   _id: string;
   conversationId: string;
   sender: Participant;
-  receiver: string;
+  receiver: string; // receiver id
   text: string;
   createdAt: string;
 }
@@ -58,8 +58,9 @@ const MessagesPage = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setConversations(response.data);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to load conversations.");
+    } catch (err: unknown) {
+      if (err instanceof Error) setError(err.message);
+      else setError("Failed to load conversations.");
     } finally {
       setIsLoadingConversations(false);
     }
@@ -69,44 +70,57 @@ const MessagesPage = () => {
     fetchConversations();
   }, [fetchConversations]);
 
+  // Effect to handle "with" query param to start or select conversation
   useEffect(() => {
+    let isMounted = true;
     const recipientId = searchParams.get('with');
 
-    if (recipientId && currentUser && recipientId !== currentUser._id && !isCreatingConversation) {
-      const existingConv = conversations.find(conv =>
-        conv.participants.some(p => p._id === recipientId && p._id !== currentUser._id)
-      );
+    const createNewConversation = async () => {
+      if (!token || !recipientId) return;
 
+      try {
+        setIsCreatingConversation(true);
+        const response = await api.post(
+          '/api/messages/conversations',
+          { receiverId: recipientId },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!isMounted) return;
+        setConversations((prev) => {
+          const exists = prev.some((conv) => conv._id === response.data._id);
+          return exists ? prev : [response.data, ...prev];
+        });
+        setSelectedConversation(response.data);
+      } catch (err: unknown) {
+        if (err instanceof Error) setError(err.message);
+        else setError("Failed to start new conversation.");
+      } finally {
+        if (isMounted) setIsCreatingConversation(false);
+        navigate('/messages', { replace: true });
+      }
+    };
+
+    if (recipientId && currentUser && recipientId !== currentUser._id && !isCreatingConversation) {
+      const existingConv = conversations.find(
+        (conv) => conv.participants.some((p) => p._id === recipientId && p._id !== currentUser._id)
+      );
       if (existingConv) {
         setSelectedConversation(existingConv);
         navigate('/messages', { replace: true });
       } else {
-        setIsCreatingConversation(true);
-        const createNewConversation = async () => {
-          try {
-            const response = await api.post('/api/messages/conversations', { receiverId: recipientId }, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            setConversations(prev => {
-              const exists = prev.some(conv => conv._id === response.data._id);
-              return exists ? prev : [response.data, ...prev];
-            });
-            setSelectedConversation(response.data);
-          } catch (err: any) {
-            setError(err.response?.data?.message || "Failed to start new conversation.");
-          } finally {
-            setIsCreatingConversation(false);
-            navigate('/messages', { replace: true });
-          }
-        };
         createNewConversation();
       }
     } else if (recipientId && currentUser && recipientId === currentUser._id) {
       navigate('/messages', { replace: true });
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [searchParams, conversations, currentUser, token, navigate, isCreatingConversation]);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchMessages = async () => {
       if (!selectedConversation || !token) {
         setMessages([]);
@@ -118,15 +132,20 @@ const MessagesPage = () => {
         const response = await api.get(`/api/messages/${selectedConversation._id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        if (!isMounted) return;
         setMessages(response.data);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load messages.");
+      } catch (err: unknown) {
+        if (err instanceof Error) setError(err.message);
+        else setError("Failed to load messages.");
       } finally {
-        setIsLoadingMessages(false);
+        if (isMounted) setIsLoadingMessages(false);
       }
     };
 
     fetchMessages();
+    return () => {
+      isMounted = false;
+    };
   }, [selectedConversation, token]);
 
   useEffect(() => {
@@ -138,29 +157,32 @@ const MessagesPage = () => {
     if (!newMessageText.trim() || !selectedConversation || !currentUser || !token) return;
 
     try {
-      const recipient = selectedConversation.participants.find(p => p._id !== currentUser._id);
+      const recipient = selectedConversation.participants.find((p) => p._id !== currentUser._id);
       if (!recipient) {
         setError("Recipient not found in conversation.");
         return;
       }
 
-      const response = await api.post('/api/messages', {
-        conversationId: selectedConversation._id,
-        receiver: recipient._id,
-        text: newMessageText,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.post(
+        '/api/messages',
+        {
+          conversationId: selectedConversation._id,
+          receiver: recipient._id,
+          text: newMessageText,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      setMessages(prev => [...prev, { ...response.data, sender: currentUser }]);
+      setMessages((prev) => [...prev, { ...response.data, sender: currentUser }]);
       setNewMessageText('');
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to send message.");
+    } catch (err: unknown) {
+      if (err instanceof Error) setError(err.message);
+      else setError("Failed to send message.");
     }
   };
 
   const getOtherParticipant = (conversation: Conversation) => {
-    return conversation.participants.find(p => p._id !== currentUser?._id);
+    return conversation.participants.find((p) => p._id !== currentUser?._id);
   };
 
   return (
@@ -168,16 +190,23 @@ const MessagesPage = () => {
       <Header />
       <main className="pt-16 flex-grow container mx-auto px-4 flex">
         <LeftSidebar />
+
         <div className="flex-grow p-4 flex bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+          {/* Conversations Sidebar */}
           <div className="w-1/3 border-r border-gray-700 pr-4 flex flex-col">
             <h2 className="text-xl font-bold mb-4">Conversations</h2>
+
             {isLoadingConversations ? (
-              <p className="text-gray-400">Loading conversations...</p>
+              <p className="text-gray-400" role="status" aria-live="polite">
+                Loading conversations...
+              </p>
             ) : error ? (
-              <p className="text-red-400 flex items-center"><XCircle size={16} className="mr-2"/> {error}</p>
+              <p className="text-red-400 flex items-center" role="alert">
+                <XCircle size={16} className="mr-2" /> {error}
+              </p>
             ) : conversations.length > 0 ? (
               <div className="flex-grow overflow-y-auto space-y-2">
-                {conversations.map(conv => {
+                {conversations.map((conv) => {
                   const otherParticipant = getOtherParticipant(conv);
                   if (!otherParticipant) return null;
                   return (
@@ -185,13 +214,20 @@ const MessagesPage = () => {
                       key={conv._id}
                       onClick={() => setSelectedConversation(conv)}
                       className={`w-full text-left p-3 rounded-lg flex items-center space-x-3 transition-colors duration-200 ${
-                        selectedConversation?._id === conv._id ? 'bg-indigo-700' : 'bg-gray-700 hover:bg-gray-600'
+                        selectedConversation?._id === conv._id
+                          ? 'bg-indigo-700'
+                          : 'bg-gray-700 hover:bg-gray-600'
                       }`}
+                      aria-pressed={selectedConversation?._id === conv._id}
+                      type="button"
                     >
-                      <img 
-                        src={otherParticipant.avatar || `https://placehold.co/50x50/1a202c/ffffff?text=${otherParticipant.fullName.charAt(0)}`} 
-                        alt={otherParticipant.fullName} 
-                        className="w-10 h-10 rounded-full object-cover" 
+                      <img
+                        src={
+                          otherParticipant.avatar ||
+                          `https://placehold.co/50x50/1a202c/ffffff?text=${otherParticipant.fullName.charAt(0)}`
+                        }
+                        alt={otherParticipant.fullName}
+                        className="w-10 h-10 rounded-full object-cover"
                       />
                       <div>
                         <p className="font-semibold text-white">{otherParticipant.fullName}</p>
@@ -202,10 +238,13 @@ const MessagesPage = () => {
                 })}
               </div>
             ) : (
-              <p className="text-gray-400">No conversations yet. Message someone from their profile!</p>
+              <p className="text-gray-400">
+                No conversations yet. Message someone from their profile!
+              </p>
             )}
           </div>
 
+          {/* Message Window */}
           <div className="w-2/3 pl-4 flex flex-col">
             {selectedConversation ? (
               <>
@@ -218,19 +257,26 @@ const MessagesPage = () => {
                   {isLoadingMessages ? (
                     <p className="text-gray-400">Loading messages...</p>
                   ) : messages.length > 0 ? (
-                    messages.map(msg => (
-                      <div 
-                        key={msg._id} 
-                        className={`flex ${msg.sender._id === currentUser?._id ? 'justify-end' : 'justify-start'}`}
+                    messages.map((msg) => (
+                      <div
+                        key={msg._id}
+                        className={`flex ${
+                          msg.sender._id === currentUser?._id ? 'justify-end' : 'justify-start'
+                        }`}
                       >
-                        <div 
+                        <div
                           className={`max-w-[70%] p-3 rounded-lg ${
-                            msg.sender._id === currentUser?._id ? 'bg-indigo-600' : 'bg-gray-700'
+                            msg.sender._id === currentUser?._id
+                              ? 'bg-indigo-600'
+                              : 'bg-gray-700'
                           }`}
                         >
                           <p className="text-sm text-white">{msg.text}</p>
                           <p className="text-xs text-gray-400 mt-1 text-right">
-                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(msg.createdAt).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
                           </p>
                         </div>
                       </div>
@@ -252,6 +298,7 @@ const MessagesPage = () => {
                     type="submit"
                     disabled={!newMessageText.trim()}
                     className="p-3 bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-gray-500 text-white"
+                    aria-label="Send message"
                   >
                     <Send size={20} />
                   </button>
