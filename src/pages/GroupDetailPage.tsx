@@ -16,7 +16,6 @@ interface PostAuthor {
   avatar?: string;
   profilePictureUrl?: string;
 }
-
 interface Post {
   _id: string;
   user: PostAuthor;
@@ -29,14 +28,12 @@ interface Post {
   reactions: any[];
   group?: { _id: string; admin: string };
 }
-
 interface GroupMember {
   _id: string;
   fullName: string;
   avatar?: string;
   role: string;
 }
-
 interface GroupDetails {
   _id: string;
   name: string;
@@ -63,7 +60,6 @@ const GroupDetailPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  // Fetch group details
   const fetchGroupDetails = useCallback(async () => {
     if (!groupId || !token) return;
     setIsLoading(true);
@@ -74,10 +70,8 @@ const GroupDetailPage = () => {
       });
       const fetchedGroup: GroupDetails = response.data;
       setGroup(fetchedGroup);
-
       if (currentUser) {
-        const memberFound = fetchedGroup.members.some((m) => m._id === currentUser._id);
-        setIsMember(memberFound);
+        setIsMember(fetchedGroup.members.some(m => m._id === currentUser._id));
       } else {
         setIsMember(false);
       }
@@ -85,18 +79,13 @@ const GroupDetailPage = () => {
       console.error('Failed to fetch group details:', err);
       if (err instanceof Error) setError(err.message);
       else setError('Failed to load group details.');
-
-      // Redirect if group not found or access forbidden
       const status = (err as any)?.response?.status;
-      if (status === 404 || status === 403) {
-        navigate('/groups');
-      }
+      if (status === 404 || status === 403) navigate('/groups');
     } finally {
       setIsLoading(false);
     }
   }, [groupId, token, currentUser, navigate]);
 
-  // Fetch posts of the group
   const fetchGroupPosts = useCallback(async () => {
     if (!groupId || !token) return;
     setIsLoadingPosts(true);
@@ -123,18 +112,16 @@ const GroupDetailPage = () => {
     fetchGroupPosts();
   }, [fetchGroupDetails, fetchGroupPosts]);
 
-  // Handle join/leave action
   const handleJoinLeave = async () => {
     if (!groupId || !token || !group || !currentUser) return;
     setIsProcessing(true);
     setError('');
     const endpoint = isMember ? `/api/groups/${groupId}/leave` : `/api/groups/${groupId}/join`;
-
     try {
       await api.post(endpoint, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      await fetchGroupDetails(); // corrected function call
+      await fetchGroupDetails();
     } catch (err: unknown) {
       console.error(`Failed to ${isMember ? 'leave' : 'join'} group:`, err);
       if (err instanceof Error) setError(err.message);
@@ -144,16 +131,13 @@ const GroupDetailPage = () => {
     }
   };
 
-  // Cover image upload handler
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.length && groupId && group) {
       const file = e.target.files[0];
       const formData = new FormData();
       formData.append('coverImage', file);
-
       setIsUploadingCover(true);
       setError('');
-
       try {
         const response = await api.put(`/api/groups/${groupId}/cover`, formData, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
@@ -169,26 +153,18 @@ const GroupDetailPage = () => {
     }
   };
 
-  // Post deleted handler
   const handlePostDeleted = (deletedPostId: string) => {
-    setPosts((posts) => posts.filter((p) => p._id !== deletedPostId));
+    setPosts(posts => posts.filter(p => p._id !== deletedPostId));
   };
-
-  // Post updated handler
   const handlePostUpdated = (updatedPost: Post) => {
-    setPosts((posts) => posts.map((p) => (p._id === updatedPost._id ? updatedPost : p)));
+    setPosts(posts => posts.map(p => (p._id === updatedPost._id ? updatedPost : p)));
   };
-
-  // Group updated handler (e.g., privacy change)
   const handleGroupUpdated = (updatedGroup: GroupDetails) => {
     setGroup(updatedGroup);
-    // Refetch posts if privacy changes
     if (updatedGroup.isPrivate !== group?.isPrivate) {
       fetchGroupPosts();
     }
   };
-
-  // Group deleted handler
   const handleGroupDeleted = (deletedGroupId: string) => {
     console.log(`Group ${deletedGroupId} deleted.`);
     navigate('/groups');
@@ -201,7 +177,6 @@ const GroupDetailPage = () => {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="bg-gray-900 min-h-screen text-white flex items-center justify-center">
@@ -209,7 +184,6 @@ const GroupDetailPage = () => {
       </div>
     );
   }
-
   if (!group) {
     return (
       <div className="bg-gray-900 min-h-screen text-white flex items-center justify-center">
@@ -219,20 +193,14 @@ const GroupDetailPage = () => {
   }
 
   const isAdmin = currentUser?._id === group.admin;
-  const groupCover =
-    group.coverImageUrl ||
-    `https://placehold.co/1200x300/1f2937/ffffff?text=${encodeURIComponent(group.name)}`;
+  const groupCover = group.coverImageUrl || `https://placehold.co/1200x300/1f2937/ffffff?text=${encodeURIComponent(group.name)}`;
 
   return (
     <>
       <div className="bg-gray-900 min-h-screen text-white">
         <Header />
         <div className="relative h-64 md:h-80">
-          <img
-            src={groupCover}
-            alt={`${group.name} cover`}
-            className="object-cover w-full h-full"
-          />
+          <img src={groupCover} alt={`${group.name} cover`} className="object-cover w-full h-full" />
           <div className="absolute inset-0 bg-black/60 flex flex-col justify-end p-8">
             <h1 className="text-4xl md:text-5xl font-bold text-white">{group.name}</h1>
             <p className="mt-2 text-lg text-gray-300">{group.description}</p>
@@ -268,7 +236,6 @@ const GroupDetailPage = () => {
             </div>
           )}
         </div>
-
         <main className="container px-4 py-6 mx-auto">
           <div className="flex flex-col gap-6 md:flex-row">
             <LeftSidebar />
@@ -284,19 +251,17 @@ const GroupDetailPage = () => {
                     Loading posts...
                   </p>
                 ) : posts.length > 0 ? (
-                  posts.map((post) => (
+                  posts.map(post => (
                     <PostCard
                       key={post._id}
                       post={post}
                       onPostDeleted={handlePostDeleted}
                       onPostUpdated={handlePostUpdated}
-                      /* Only add `groupAdminId` prop if PostCard supports it */
+                      // groupAdminId={group.admin} // Only add if PostCard type supports it
                     />
                   ))
                 ) : (
-                  <p className="py-10 text-center text-gray-400">
-                    No posts in this group yet.
-                  </p>
+                  <p className="py-10 text-center text-gray-400">No posts in this group yet.</p>
                 )}
               </div>
             </div>
@@ -328,21 +293,16 @@ const GroupDetailPage = () => {
                 </button>
               </div>
               <div className="rounded-lg bg-gray-800 p-4">
-                <h3 className="mb-4 text-lg font-bold text-white">
-                  Members ({group.members.length})
-                </h3>
+                <h3 className="mb-4 text-lg font-bold text-white">Members ({group.members.length})</h3>
                 <ul>
-                  {group.members.slice(0, 10).map((member) => (
+                  {group.members.slice(0, 10).map(member => (
                     <li key={member._id}>
                       <Link
                         to={`/profile/${member._id}`}
                         className="flex items-center space-x-3 rounded-md p-2 hover:bg-gray-700/50"
                       >
                         <img
-                          src={
-                            member.avatar ??
-                            `https://placehold.co/100x100/1f2937/ffffff?text=${member.fullName?.charAt(0) ?? 'U'}`
-                          }
+                          src={member.avatar || `https://placehold.co/100x100/1f2937/ffffff?text=${member.fullName?.charAt(0) ?? 'U'}`}
                           alt={member.fullName}
                           className="h-10 w-10 rounded-full object-cover"
                         />
@@ -367,7 +327,8 @@ const GroupDetailPage = () => {
             onGroupUpdate={handleGroupUpdated}
           />
         )}
-      </>
+      </div>
+    </>
   );
 };
 
