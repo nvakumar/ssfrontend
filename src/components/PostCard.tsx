@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'; // Keep React import for useState, useEffect, useRef
+import { useState, useEffect, useRef } from 'react';
 import { ThumbsUp, MessageCircle, Share2, Trash2, Edit, MoreVertical, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -6,13 +6,12 @@ import api from '../services/api';
 import CommentSection from './CommentSection';
 import EditPostModal from './EditPostModal';
 
-// Define the shape of the Post data coming from the API
 interface PostAuthor {
   _id: string;
   fullName: string;
   role: string;
   avatar?: string;
-  profilePictureUrl?: string; // Include profilePictureUrl as it's the backend field
+  profilePictureUrl?: string;
 }
 
 interface Post {
@@ -32,7 +31,6 @@ type PostCardProps = {
   post: Post;
   onPostDeleted: (postId: string) => void;
   onPostUpdated: (updatedPost: Post) => void;
-  // groupAdminId?: string; // This prop is not directly used in PostCard, but passed to CommentSection
 };
 
 const PostCard = ({ post, onPostDeleted, onPostUpdated }: PostCardProps) => {
@@ -46,6 +44,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }: PostCardProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [isEditPostModalOpen, setIsEditPostModalOpen] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -76,6 +75,9 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }: PostCardProps) => {
       return;
     }
 
+    if (isLiking) return;  // prevent rapid clicks
+    setIsLiking(true);
+
     const originalIsLiked = isLiked;
     const originalLikeCount = likeCount;
 
@@ -88,11 +90,17 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }: PostCardProps) => {
           Authorization: `Bearer ${token}`,
         },
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to update like status:", error);
       setIsLiked(originalIsLiked);
       setLikeCount(originalLikeCount);
-      alert('Failed to like the post. Please try again.');
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert('Failed to like the post. Please try again.');
+      }
+    } finally {
+      setIsLiking(false);
     }
   };
 
@@ -116,9 +124,13 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }: PostCardProps) => {
       });
       onPostDeleted(post._id);
     }
-    catch (error: any) {
+    catch (error: unknown) {
       console.error("Failed to delete post:", error);
-      alert(error.response?.data?.message || 'Failed to delete post. Please try again.');
+      if (error instanceof Error) {
+        alert(error.message);
+      } else {
+        alert('Failed to delete post. Please try again.');
+      }
     }
   };
 
@@ -144,7 +156,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }: PostCardProps) => {
   const authorAvatar = 
     post.user.profilePictureUrl || 
     post.user.avatar || 
-    `https://placehold.co/100x100/1a202c/ffffff?text=${post.user.fullName.charAt(0)}`;
+    `https://placehold.co/100x100/1a202c/ffffff?text=${post.user.fullName?.charAt(0) ?? 'U'}`;
 
   const isPostOwner = currentUser && post.user._id === currentUser._id;
   const isGroupAdmin = currentUser && post.group && post.group.admin === currentUser._id;
@@ -158,7 +170,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }: PostCardProps) => {
           <img
             src={authorAvatar}
             alt={post.user.fullName}
-            className="w-12 h-12 rounded-full mr-2 object-cover" // Adjusted size to 12x12
+            className="w-12 h-12 rounded-full mr-2 object-cover"
           />
           <div>
             <p className="font-semibold text-white hover:underline">{post.user.fullName}</p>
@@ -168,29 +180,39 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }: PostCardProps) => {
         {canModifyPost && (
           <div className="relative" ref={menuRef}>
             <button
+              aria-haspopup="true"
+              aria-expanded={showMenu}
+              aria-label="Post options"
               onClick={() => setShowMenu(!showMenu)}
               className="p-2 rounded-full text-gray-400 hover:bg-gray-700 transition-colors duration-200"
-              title="Post Options" // Added title for accessibility
+              title="Post Options"
+              type="button"
             >
               <MoreVertical size={20} />
             </button>
             {showMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg py-1 z-10">
+              <div role="menu" aria-label="Post options" className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg py-1 z-10">
                 <button
+                  role="menuitem"
                   onClick={handleEditPost}
                   className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 flex items-center space-x-2"
+                  type="button"
                 >
                   <Edit size={16} /> <span>Edit Post</span>
                 </button>
                 <button
+                  role="menuitem"
                   onClick={handleSharePost}
                   className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600 flex items-center space-x-2"
+                  type="button"
                 >
                   <Share2 size={16} /> <span>Share Post</span>
                 </button>
                 <button
+                  role="menuitem"
                   onClick={() => setShowConfirmDelete(true)}
                   className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-600 flex items-center space-x-2"
+                  type="button"
                 >
                   <Trash2 size={16} /> <span>Delete Post</span>
                 </button>
@@ -226,19 +248,27 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }: PostCardProps) => {
           {/* Like Button */}
           <button
             onClick={handleLike}
+            disabled={isLiking}
             className={`flex items-center space-x-2 text-sm px-3 py-2 rounded-md transition-colors duration-200 ${
               isLiked ? 'text-indigo-400 bg-indigo-900/20' : 'text-gray-300 hover:text-indigo-400 hover:bg-gray-700'
             }`}
+            aria-pressed={isLiked}
+            aria-label={isLiked ? 'Unlike post' : 'Like post'}
+            type="button"
           >
             <ThumbsUp size={20} fill={isLiked ? 'currentColor' : 'none'} />
             <span>Like</span>
           </button>
+
           {/* Comment Button */}
           <button
             onClick={() => setShowComments(!showComments)}
             className={`flex items-center space-x-2 text-sm px-3 py-2 rounded-md transition-colors duration-200 ${
               showComments ? 'text-indigo-400 bg-indigo-900/20' : 'text-gray-300 hover:text-indigo-400 hover:bg-gray-700'
             }`}
+            aria-expanded={showComments}
+            aria-controls={`comments-section-${post._id}`}
+            type="button"
           >
             <MessageCircle size={20} />
             <span>Comment</span>
@@ -248,31 +278,40 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }: PostCardProps) => {
 
       {/* Comment Section */}
       {showComments && (
-        <CommentSection 
-          postId={post._id} 
-          initialComments={comments} 
-          onCommentChange={handleCommentChange} 
-          postOwnerId={post.user._id}
-          groupAdminId={post.group?.admin}
-        />
+        <div id={`comments-section-${post._id}`}>
+          <CommentSection 
+            postId={post._id} 
+            initialComments={comments} 
+            onCommentChange={handleCommentChange} 
+            postOwnerId={post.user._id}
+            groupAdminId={post.group?.admin}
+          />
+        </div>
       )}
 
       {/* Delete Confirmation Modal */}
       {showConfirmDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-deletion-title"
+        >
           <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-sm p-6 space-y-4 text-center">
-            <h3 className="text-xl font-bold text-white">Confirm Deletion</h3>
+            <h3 id="confirm-deletion-title" className="text-xl font-bold text-white">Confirm Deletion</h3>
             <p className="text-gray-300">Are you sure you want to delete this post? This action cannot be undone.</p>
             <div className="flex justify-center space-x-4 mt-6">
               <button
                 onClick={() => setShowConfirmDelete(false)}
                 className="px-6 py-2 font-bold text-gray-300 bg-gray-600 rounded-md hover:bg-gray-500"
+                type="button"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeletePost}
                 className="px-6 py-2 font-bold text-white bg-red-600 rounded-md hover:bg-red-700"
+                type="button"
               >
                 Delete
               </button>
