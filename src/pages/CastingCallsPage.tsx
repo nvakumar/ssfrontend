@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react'; // Keep React import
+import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import Header from '../components/Header'; // Corrected import path
-import LeftSidebar from '../components/LeftSidebar'; // Corrected import path
-import CastingCallCard from '../components/CastingCallCard'; // Corrected import path
-import CreateCastingCallModal from '../components/CreateCastingCallModal'; // Corrected import path
-import { Loader2, XCircle } from 'lucide-react'; // Added Loader2, XCircle icons
+import Header from '../components/Header';
+import LeftSidebar from '../components/LeftSidebar';
+import CastingCallCard from '../components/CastingCallCard';
+import CreateCastingCallModal from '../components/CreateCastingCallModal';
+import { Loader2, XCircle } from 'lucide-react';
 
-// Define the shape of the Casting Call data we expect from the API
 interface CastingCallUser {
   _id: string;
   fullName: string;
   role: string;
-  avatar?: string; // Ensure avatar is optional here if not always present
+  avatar?: string;
 }
+
 interface CastingCall {
   _id: string;
   user: CastingCallUser;
@@ -23,13 +23,13 @@ interface CastingCall {
   roleType: string;
   location: string;
   applicationDeadline: string;
-  contactEmail: string; // Ensure this is present if required, or make optional
+  contactEmail?: string; // Mark optional if not always returned
 }
 
 const CastingCallsPage = () => {
   const [castingCalls, setCastingCalls] = useState<CastingCall[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(''); // Added error state
+  const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { token } = useAuth();
 
@@ -40,15 +40,19 @@ const CastingCallsPage = () => {
       return;
     }
     setIsLoading(true);
-    setError(''); // Clear previous errors
+    setError('');
     try {
-      const response = await api.get('/api/casting-calls', {
+      const response = await api.get<CastingCall[]>('/api/casting-calls', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCastingCalls(response.data);
-    } catch (err: any) { // Catch error explicitly
+    } catch (err: unknown) {
       console.error("Failed to fetch casting calls:", err);
-      setError(err.response?.data?.message || "Failed to load casting calls. Please try again.");
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to load casting calls. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -56,11 +60,11 @@ const CastingCallsPage = () => {
 
   useEffect(() => {
     fetchCastingCalls();
-  }, [token]); // Dependency on token
+  }, [token]);
 
   const handleCastingCallCreated = () => {
-    fetchCastingCalls(); // Refresh the list after a new call is posted
-    setIsModalOpen(false); // Close the modal
+    fetchCastingCalls();
+    setIsModalOpen(false);
   };
 
   return (
@@ -68,7 +72,7 @@ const CastingCallsPage = () => {
       <Header />
       <main className="pt-16 flex-grow container mx-auto px-4 flex">
         <LeftSidebar />
-        
+
         <div className="flex-grow p-4">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">Casting Calls</h1>
@@ -79,11 +83,15 @@ const CastingCallsPage = () => {
               Post a Casting Call
             </button>
           </div>
-          
+
           {isLoading ? (
-            <p className="text-gray-400 flex items-center justify-center py-10"><Loader2 size={24} className="animate-spin mr-2" /> Loading casting calls...</p>
+            <p className="text-gray-400 flex items-center justify-center py-10">
+              <Loader2 size={24} className="animate-spin mr-2" /> Loading casting calls...
+            </p>
           ) : error ? (
-            <p className="text-red-400 flex items-center justify-center py-10"><XCircle size={16} className="mr-2"/> {error}</p>
+            <p className="text-red-400 flex items-center justify-center py-10">
+              <XCircle size={16} className="mr-2" /> {error}
+            </p>
           ) : castingCalls.length > 0 ? (
             <div className="space-y-6">
               {castingCalls.map(call => (
@@ -98,7 +106,6 @@ const CastingCallsPage = () => {
         </div>
       </main>
 
-      {/* Create Casting Call Modal */}
       {isModalOpen && (
         <CreateCastingCallModal 
           onClose={() => setIsModalOpen(false)}
