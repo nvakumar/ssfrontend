@@ -1,4 +1,4 @@
-// src/components/ProtectedRoute.tsx
+// Removed 'React' import as it's not directly used for React.useState etc.
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 

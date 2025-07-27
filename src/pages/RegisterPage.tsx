@@ -1,21 +1,23 @@
-// src/pages/RegisterPage.tsx
-import { useState } from 'react';
+import React, { useState } from 'react'; // Keep React import for useState
 import api from '../services/api';
 import { Link } from 'react-router-dom';
+import { Loader2 } from 'lucide-react'; // Added Loader2 icon
 
 const RegisterPage = () => {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('Actor');
+  const [location, setLocation] = useState(''); // New state for location
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false); // State for loading indicator
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Clear previous messages
     setError('');
     setSuccess('');
+    setIsSubmitting(true); // Set submitting to true
 
     try {
       const response = await api.post('/api/auth/register', {
@@ -23,6 +25,7 @@ const RegisterPage = () => {
         email,
         password,
         role,
+        location, // Include location in the request body
       });
       console.log('Registration successful:', response.data);
       setSuccess('Registration successful! You can now sign in.');
@@ -30,16 +33,20 @@ const RegisterPage = () => {
       setFullName('');
       setEmail('');
       setPassword('');
+      setLocation(''); // Clear location
+      setRole('Actor'); // Reset role to default
     } catch (err: any) {
       console.error('Registration failed:', err);
       const message = err.response?.data?.message || 'Registration failed. Please try again.';
       setError(message);
+    } finally {
+      setIsSubmitting(false); // Reset submitting to false
     }
   };
 
   const roles = [
     'Actor', 'Model', 'Filmmaker', 'Director', 'Writer',
-    'Photographer', 'Editor', 'Musician', 'Creator', 'Student'
+    'Photographer', 'Editor', 'Musician', 'Creator', 'Student', 'Production House' // Ensure roles match backend
   ];
 
   return (
@@ -76,6 +83,7 @@ const RegisterPage = () => {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className="w-full p-3 mt-2 text-white bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Your Full Name"
             />
           </div>
           {/* Email Input */}
@@ -91,6 +99,7 @@ const RegisterPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full p-3 mt-2 text-white bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="you@example.com"
             />
           </div>
           {/* Password Input */}
@@ -107,6 +116,22 @@ const RegisterPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-3 mt-2 text-white bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="••••••••"
+            />
+          </div>
+          {/* Location Input */}
+          <div>
+            <label htmlFor="location" className="text-sm font-bold text-gray-400">
+              Your Location
+            </label>
+            <input
+              id="location"
+              name="location"
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full p-3 mt-2 text-white bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="e.g., Hyderabad, Mumbai"
             />
           </div>
           {/* Role Select */}
@@ -130,8 +155,10 @@ const RegisterPage = () => {
           <div>
             <button
               type="submit"
-              className="w-full p-3 font-bold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500"
+              disabled={isSubmitting} // Disable button while submitting
+              className="w-full p-3 font-bold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500 disabled:bg-gray-500 disabled:cursor-not-allowed"
             >
+              {isSubmitting ? <Loader2 size={20} className="animate-spin inline mr-2" /> : ''}
               Create Account
             </button>
           </div>

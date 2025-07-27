@@ -1,5 +1,4 @@
-// src/components/CastingCallCard.tsx
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { MapPin, Calendar, Film, UserCheck, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -10,7 +9,9 @@ interface CastingCallUser {
   _id: string;
   fullName: string;
   role: string;
+  avatar?: string;
 }
+
 interface CastingCall {
   _id: string;
   user: CastingCallUser;
@@ -30,22 +31,20 @@ type CastingCallCardProps = {
 const CastingCallCard = ({ call }: CastingCallCardProps) => {
   const { token } = useAuth();
   const [isApplying, setIsApplying] = useState(false);
-  const [isApplied, setIsApplied] = useState(false); // State to track application status
+  const [isApplied, setIsApplied] = useState(false);
   const [error, setError] = useState('');
 
   const handleApply = async () => {
     setIsApplying(true);
     setError('');
     try {
-      // This endpoint would create an in-app notification for the casting director
-      // NOTE: The backend for this endpoint needs to be created.
       await api.post(`/api/casting-calls/${call._id}/apply`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setIsApplied(true); // Update state on success
-    } catch (err) {
+      setIsApplied(true);
+    } catch (err: any) {
       console.error("Failed to apply:", err);
-      setError('Failed to submit application. Please try again.');
+      setError(err.response?.data?.message || 'Failed to submit application. Please try again.');
     } finally {
       setIsApplying(false);
     }
@@ -73,7 +72,7 @@ const CastingCallCard = ({ call }: CastingCallCardProps) => {
         {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
       </div>
 
-      {/* Action Button - Changed back to a button with state */}
+      {/* Action Button */}
       <div className="flex-shrink-0 mt-4 md:mt-0">
         <button 
           onClick={handleApply}

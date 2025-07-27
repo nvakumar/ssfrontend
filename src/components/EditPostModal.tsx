@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, UploadCloud } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, UploadCloud, Loader2 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -67,31 +67,33 @@ const EditPostModal = ({ isOpen, onClose, onSuccess, post }: EditPostModalProps)
     }
   };
 
-  const uploadMedia = async () => {
-    if (!newMediaFile || !token) return;
+  // Function to upload media, returns { mediaUrl, mediaType } or null on failure
+  const uploadMedia = async (): Promise<{ mediaUrl: string; mediaType: 'Photo' | 'Video' } | null> => {
+    if (!newMediaFile || !token) return null;
 
     setIsUploadingMedia(true);
     const formData = new FormData();
-    formData.append('file', newMediaFile); // 'file' must match backend multer field
+    formData.append('file', newMediaFile);
 
     try {
-      // Use the createPost endpoint for file upload, but only care about the URL
-      // In a more complex app, you'd have a dedicated media upload endpoint
-      const response = await api.post('/api/posts', formData, { // Reusing post creation for file upload
+      const response = await api.post('/api/posts', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`,
         },
       });
-      // The backend createPost returns the full post, we just need the mediaUrl
-      setMediaUrl(response.data.mediaUrl);
-      setMediaType(response.data.mediaType);
+      const uploadedData = {
+        mediaUrl: response.data.mediaUrl,
+        mediaType: response.data.mediaType,
+      };
+      setMediaUrl(uploadedData.mediaUrl);
+      setMediaType(uploadedData.mediaType);
       setNewMediaFile(null);
-      return { mediaUrl: response.data.mediaUrl, mediaType: response.data.mediaType };
+      return uploadedData;
     } catch (err: any) {
       console.error('Failed to upload new media:', err);
       setError(err.response?.data?.message || 'Failed to upload new media.');
-      throw err;
+      return null; // Explicitly return null on error
     } finally {
       setIsUploadingMedia(false);
     }
@@ -110,14 +112,18 @@ const EditPostModal = ({ isOpen, onClose, onSuccess, post }: EditPostModalProps)
       // If a new file is selected, upload it first
       if (newMediaFile) {
         const uploadedMedia = await uploadMedia();
-        if (uploadedMedia) {
+        if (uploadedMedia) { // Check if uploadedMedia is not null
           finalMediaUrl = uploadedMedia.mediaUrl;
           finalMediaType = uploadedMedia.mediaType;
+        } else {
+          // If upload failed, stop submission
+          setIsSubmitting(false);
+          return;
         }
       }
 
       // Now, update the post details
-      const response = await api.put(`/api/posts/${post._id}`, { // Assuming a PUT /api/posts/:id endpoint for updating posts
+      const response = await api.put(`/api/posts/${post._id}`, {
         title,
         description,
         mediaUrl: finalMediaUrl,
@@ -128,7 +134,7 @@ const EditPostModal = ({ isOpen, onClose, onSuccess, post }: EditPostModalProps)
         },
       });
       
-      onSuccess(response.data); // Notify parent with the updated post
+      onSuccess(response.data);
       onClose();
     } catch (err: any) {
       console.error('Failed to update post:', err);

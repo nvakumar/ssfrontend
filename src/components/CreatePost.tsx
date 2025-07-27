@@ -1,12 +1,11 @@
-// src/components/CreatePost.tsx
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { ImagePlus } from 'lucide-react';
+import { ImagePlus, Loader2 } from 'lucide-react'; // Removed Video as it's not directly used
 
 type CreatePostProps = {
   onPostCreated: () => void;
-  groupId?: string;
+  groupId?: string; // Optional groupId prop
 };
 
 const CreatePost = ({ onPostCreated, groupId }: CreatePostProps) => {
@@ -19,13 +18,14 @@ const CreatePost = ({ onPostCreated, groupId }: CreatePostProps) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setFile(e.target.files[0]);
+      setError('');
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) {
-      setError('Please enter some text for your post.');
+    if (!title.trim() && !file) { // Require either title or file
+      setError('Please enter some text or select a file for your post.');
       return;
     }
     setError('');
@@ -39,6 +39,12 @@ const CreatePost = ({ onPostCreated, groupId }: CreatePostProps) => {
     // Only append the file if one is selected
     if (file) {
       formData.append('file', file);
+      // Determine mediaType based on file type (optional, backend can also do this)
+      if (file.type.startsWith('image')) {
+        formData.append('mediaType', 'Photo');
+      } else if (file.type.startsWith('video')) {
+        formData.append('mediaType', 'Video');
+      }
     }
 
     try {
@@ -53,9 +59,9 @@ const CreatePost = ({ onPostCreated, groupId }: CreatePostProps) => {
       setFile(null);
       onPostCreated();
 
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to create post:', err);
-      setError('Failed to create post. Please try again.');
+      setError(err.response?.data?.message || 'Failed to create post. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -70,7 +76,7 @@ const CreatePost = ({ onPostCreated, groupId }: CreatePostProps) => {
           className="w-full p-3 text-white bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
           placeholder={groupId ? "Post to the group..." : "Share your work..."}
           rows={3}
-          required
+          required // Title is required
         />
         <div className="flex justify-between items-center mt-4">
           <div className="flex space-x-4">
@@ -81,10 +87,10 @@ const CreatePost = ({ onPostCreated, groupId }: CreatePostProps) => {
           </div>
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || (!title.trim() && !file)} // Disable if submitting OR (title is empty AND no file)
             className="px-6 py-2 font-bold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-gray-500 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? 'Posting...' : 'Post'}
+            {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : 'Post'} {/* Added Loader2 */}
           </button>
         </div>
         {file && <p className="text-sm text-gray-400 mt-2">Selected: {file.name}</p>}

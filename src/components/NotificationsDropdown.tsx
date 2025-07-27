@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // Keep React import for useState, useEffect
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { Link } from 'react-router-dom';
-import { Bell, Briefcase, XCircle } from 'lucide-react'; // Example icons
+import { Bell, Briefcase, XCircle } from 'lucide-react';
 
 // Define the shape of the Notification data
 interface Notification {
@@ -38,7 +38,6 @@ const NotificationsDropdown = () => {
       setIsLoading(true);
       setError('');
       try {
-        // Corrected API endpoint for fetching notifications
         const response = await api.get('/api/casting-calls/notifications', { 
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -54,16 +53,7 @@ const NotificationsDropdown = () => {
     fetchNotifications();
   }, [token]);
 
-  // Helper function to render notification icon based on type (reused from NotificationsPage)
-  // This function is now less critical as we're using the applicant's avatar directly
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'application':
-        return <Briefcase size={20} className="text-indigo-400 flex-shrink-0 mt-1" />;
-      default:
-        return <Bell size={20} className="text-gray-400 flex-shrink-0 mt-1" />;
-    }
-  };
+  // Removed getNotificationIcon as it's not used in this component's JSX directly
 
   return (
     <div className="absolute top-14 right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-lg py-2 z-20 border border-gray-700 max-h-96 overflow-y-auto">
@@ -75,11 +65,10 @@ const NotificationsDropdown = () => {
       ) : notifications.length > 0 ? (
         notifications.map((notif) => (
           <Link 
-            to={`/profile/${notif.applicant._id}`} // Link to applicant's profile
+            to={`/profile/${notif.applicant._id}`} 
             key={notif._id} 
             className={`flex items-start space-x-3 px-4 py-3 hover:bg-gray-700/50 transition-colors duration-150 border-b border-gray-700 last:border-b-0 ${notif.status === 'unread' ? 'bg-indigo-900/20' : ''}`}
           >
-            {/* Display applicant's avatar */}
             <img 
               src={notif.applicant.avatar || `https://placehold.co/50x50/1a202c/ffffff?text=${notif.applicant.fullName.charAt(0)}`} 
               alt={notif.applicant.fullName} 

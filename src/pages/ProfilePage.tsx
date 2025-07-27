@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import Header from '../components/Header';
 import { useAuth } from '../context/AuthContext';
 import EditProfileModal from '../components/EditProfileModal';
 import UserListModal from '../components/UserListModal';
-import { MessageSquare, Edit, FileText, UserPlus, UserMinus, Award } from 'lucide-react';
+import { MessageSquare, Edit, FileText, UserPlus, UserMinus, Award, Loader2, XCircle, MapPin } from 'lucide-react'; // Added MapPin icon
 
 // Define types for data
 interface UserProfile {
@@ -13,13 +13,14 @@ interface UserProfile {
   fullName: string;
   email: string;
   role: string;
-  avatar?: string; // Ensure avatar is part of UserProfile
+  avatar?: string;
   bio?: string;
   skills?: string[];
   followers: string[];
   following: string[];
   resumeUrl?: string;
-  profilePictureUrl?: string; // Added to explicitly match backend field if needed
+  profilePictureUrl?: string;
+  location?: string; // 👈 Added location to UserProfile interface
 }
 
 interface Post {
@@ -37,6 +38,7 @@ interface SimpleUser {
   fullName: string;
   role: string;
   avatar?: string;
+  location?: string; // Added location to SimpleUser for lists
 }
 
 interface LeaderboardEntry {
@@ -87,6 +89,7 @@ const ProfilePage = () => {
       console.log("ProfilePage: Fetched Profile Data:", fetchedProfile);
       console.log("ProfilePage: Profile Avatar URL:", fetchedProfile.avatar);
       console.log("ProfilePage: Profile profilePictureUrl:", fetchedProfile.profilePictureUrl);
+      console.log("ProfilePage: Profile Location:", fetchedProfile.location); // Log location
       // --- DEBUG LOG END ---
 
       setProfile(fetchedProfile);
@@ -125,7 +128,8 @@ const ProfilePage = () => {
             _id: response.data.user._id,
             fullName: response.data.user.fullName,
             role: response.data.user.role,
-            avatar: response.data.user.profilePictureUrl, // Use profilePictureUrl for avatar
+            avatar: response.data.user.profilePictureUrl,
+            location: response.data.user.location, // 👈 Include location here
           });
         } catch (innerErr) {
           console.warn(`Could not fetch details for user ID: ${userId}`, innerErr);
@@ -222,18 +226,17 @@ const ProfilePage = () => {
 
 
   if (isLoading) {
-    return <div className="bg-gray-900 min-h-screen text-white flex items-center justify-center">Loading profile...</div>;
+    return <div className="bg-gray-900 min-h-screen text-white flex items-center justify-center"><Loader2 size={32} className="animate-spin mr-2" /> Loading profile...</div>;
   }
 
   if (error) {
-    return <div className="bg-gray-900 min-h-screen text-white flex items-center justify-center">{error}</div>;
+    return <div className="bg-gray-900 min-h-screen text-white flex items-center justify-center"><XCircle size={24} className="mr-2"/> {error}</div>;
   }
 
   if (!profile) {
     return null;
   }
   
-  // Use profile.profilePictureUrl if available, otherwise fallback to profile.avatar, then placeholder
   const userAvatar = profile.profilePictureUrl || profile.avatar || `https://placehold.co/150x150/1a202c/ffffff?text=${profile.fullName.charAt(0)}`;
   const isOwnProfile = currentUser && currentUser._id === profile._id;
 
@@ -249,6 +252,7 @@ const ProfilePage = () => {
               {isOnLeaderboard && (
                 <div 
                   className="absolute bottom-0 right-0 transform translate-x-1/4 translate-y-1/4 bg-yellow-500 rounded-full p-2 border-2 border-gray-900 shadow-lg"
+                  title="On Leaderboard!"
                 >
                   <Award size={24} className="text-white" />
                 </div>
@@ -258,10 +262,15 @@ const ProfilePage = () => {
               <h1 className="text-3xl md:text-4xl font-bold flex items-center justify-center md:justify-start">
                 {profile.fullName}
                 {isOnLeaderboard && (
-                  <Award size={24} className="ml-3 text-yellow-400" />
+                  <Award size={24} className="ml-3 text-yellow-400" title="Top Talent!" />
                 )}
               </h1>
               <p className="text-lg text-indigo-400">{profile.role}</p>
+              {profile.location && ( // 👈 Display location if available
+                <p className="text-gray-400 mt-1 flex items-center justify-center md:justify-start">
+                  <MapPin size={16} className="mr-2" /> {profile.location}
+                </p>
+              )}
               <p className="text-gray-400 mt-2">{profile.bio || 'This user has not added a bio yet.'}</p>
               
               {/* Skills Display */}
@@ -376,8 +385,9 @@ const ProfilePage = () => {
           initialData={{
             bio: profile.bio || '',
             skills: profile.skills || [],
-            profilePictureUrl: profile.profilePictureUrl || '', // Use profilePictureUrl here
-            resumeUrl: profile.resumeUrl || ''
+            profilePictureUrl: profile.profilePictureUrl || '',
+            resumeUrl: profile.resumeUrl || '',
+            location: profile.location || '' // 👈 Include location here
           }}
         />
       )}

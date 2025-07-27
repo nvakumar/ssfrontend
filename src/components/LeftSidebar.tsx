@@ -1,10 +1,12 @@
+import React from 'react'; // Keep React import for JSX transform
 import { NavLink, Link } from 'react-router-dom';
-import { Home, MessageSquare, Users, Briefcase, LogOut, Settings } from 'lucide-react'; // Import Settings icon
+import { Home, MessageSquare, Users, Briefcase, LogOut, Settings, Search, Award } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const LeftSidebar = () => {
   const { user, logout } = useAuth();
 
+  // Ensure user.avatar is correctly typed from AuthContext
   const userAvatar = user?.avatar || `https://placehold.co/100x100/1a202c/ffffff?text=${user?.fullName?.charAt(0) || 'U'}`;
 
   return (
@@ -87,7 +89,7 @@ const LeftSidebar = () => {
           >
             <Award size={20} /> <span>Leaderboard</span>
           </NavLink> */}
-          {/* New Settings NavLink */}
+          {/* Settings NavLink */}
           <NavLink 
             to="/settings" 
             className={({ isActive }) => 

@@ -1,6 +1,5 @@
-// src/context/AuthContext.tsx
-import { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react'; // Keep React import for hooks
+import type { ReactNode } from 'react'; // Import ReactNode as a type
 
 // Define the shape of the user object
 interface User {
@@ -8,7 +7,13 @@ interface User {
   fullName: string;
   email: string;
   role: string;
-  avatar?: string; // Made the avatar property optional
+  profilePictureUrl?: string; // Explicitly include profilePictureUrl from backend
+  avatar?: string; // Alias for profilePictureUrl for frontend consistency
+  bio?: string;
+  skills?: string[];
+  followers?: string[];
+  following?: string[];
+  resumeUrl?: string;
 }
 
 // Define the shape of the context state
@@ -36,21 +41,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const storedToken = localStorage.getItem('token');
 
       if (storedUser && storedToken) {
-        setUser(JSON.parse(storedUser));
+        // Ensure the storedUser is parsed correctly and includes all User properties
+        const parsedUser: User = JSON.parse(storedUser);
+        // Map profilePictureUrl to avatar for consistency in frontend components
+        if (parsedUser.profilePictureUrl && !parsedUser.avatar) {
+          parsedUser.avatar = parsedUser.profilePictureUrl;
+        }
+        setUser(parsedUser);
         setToken(storedToken);
       }
     } catch (error) {
       console.error("Failed to parse auth data from localStorage", error);
+      // Clear corrupted data
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
     } finally {
-      setIsLoading(false); // Finished loading
+      setIsLoading(false);
     }
   }, []);
 
   // Login function: saves user and token to state and localStorage
   const login = (userData: User, token: string) => {
-    setUser(userData);
+    // Ensure that when logging in, profilePictureUrl is mapped to avatar
+    const userToStore = { ...userData };
+    if (userToStore.profilePictureUrl && !userToStore.avatar) {
+      userToStore.avatar = userToStore.profilePictureUrl;
+    }
+    setUser(userToStore);
     setToken(token);
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('user', JSON.stringify(userToStore));
     localStorage.setItem('token', token);
   };
 

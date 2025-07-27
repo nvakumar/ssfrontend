@@ -1,3 +1,4 @@
+import React from 'react'; // Keep React import for JSX transform
 import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 

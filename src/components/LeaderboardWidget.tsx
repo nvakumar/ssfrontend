@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // Keep React import for useState, useEffect
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Award, ChevronRight } from 'lucide-react'; // Icons for leaderboard
+import { Award, ChevronRight, Loader2 } from 'lucide-react'; // Added Loader2 icon
 
 // Define the shape of a leaderboard entry
 interface LeaderboardEntry {
@@ -15,7 +15,7 @@ interface LeaderboardEntry {
   engagementScore: number;
 }
 
-const roles = [
+const allRoles = [
   'All Roles', 'Actor', 'Model', 'Filmmaker', 'Director', 'Writer',
   'Photographer', 'Editor', 'Musician', 'Creator', 'Student', 'Production House'
 ];
@@ -37,7 +37,7 @@ const LeaderboardWidget = () => {
       setIsLoading(true);
       setError('');
       try {
-        const queryParams = selectedRole !== 'All Roles' ? `?role=${selectedRole}` : '';
+        const queryParams = selectedRole !== 'All Roles' ? `?role=${encodeURIComponent(selectedRole)}` : '';
         const response = await api.get(`/api/leaderboard${queryParams}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -51,7 +51,7 @@ const LeaderboardWidget = () => {
     };
 
     fetchLeaderboard();
-  }, [token, selectedRole]); // Re-fetch when token or selectedRole changes
+  }, [token, selectedRole]);
 
   return (
     <div className="bg-gray-800 p-4 rounded-lg shadow-lg">
@@ -66,14 +66,14 @@ const LeaderboardWidget = () => {
           onChange={(e) => setSelectedRole(e.target.value)}
           className="w-full p-2 text-sm text-white bg-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
-          {roles.map(role => (
+          {allRoles.map(role => (
             <option key={role} value={role}>{role}</option>
           ))}
         </select>
       </div>
 
       {isLoading ? (
-        <p className="text-gray-400">Loading leaderboard...</p>
+        <p className="text-gray-400 flex items-center justify-center"><Loader2 size={20} className="animate-spin mr-2" /> Loading leaderboard...</p>
       ) : error ? (
         <p className="text-red-400">{error}</p>
       ) : leaderboard.length > 0 ? (

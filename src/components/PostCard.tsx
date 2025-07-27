@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { ThumbsUp, MessageCircle, Share2, Trash2, Edit, MoreVertical } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react'; // Keep React import for useState, useEffect, useRef
+import { ThumbsUp, MessageCircle, Share2, Trash2, Edit, MoreVertical, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -12,7 +12,7 @@ interface PostAuthor {
   fullName: string;
   role: string;
   avatar?: string;
-  profilePictureUrl?: string;
+  profilePictureUrl?: string; // Include profilePictureUrl as it's the backend field
 }
 
 interface Post {
@@ -32,10 +32,10 @@ type PostCardProps = {
   post: Post;
   onPostDeleted: (postId: string) => void;
   onPostUpdated: (updatedPost: Post) => void;
-  groupAdminId?: string;
+  // groupAdminId?: string; // This prop is not directly used in PostCard, but passed to CommentSection
 };
 
-const PostCard = ({ post, onPostDeleted, onPostUpdated, groupAdminId }: PostCardProps) => {
+const PostCard = ({ post, onPostDeleted, onPostUpdated }: PostCardProps) => {
   const { user: currentUser, token } = useAuth();
 
   const [isLiked, setIsLiked] = useState(false);
@@ -140,13 +140,11 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, groupAdminId }: PostCard
       .catch(() => alert('Failed to copy link.'));
   };
 
-  // Always display uploaded profile picture if available, else placeholder
-  const authorAvatar =
-    post.user.profilePictureUrl && post.user.profilePictureUrl.trim() !== ""
-      ? post.user.profilePictureUrl
-      : post.user.avatar && post.user.avatar.trim() !== ""
-        ? post.user.avatar
-        : `https://placehold.co/100x100/1a202c/ffffff?text=${post.user.fullName.charAt(0)}`;
+  // Prioritize profilePictureUrl from backend, then avatar, then placeholder
+  const authorAvatar = 
+    post.user.profilePictureUrl || 
+    post.user.avatar || 
+    `https://placehold.co/100x100/1a202c/ffffff?text=${post.user.fullName.charAt(0)}`;
 
   const isPostOwner = currentUser && post.user._id === currentUser._id;
   const isGroupAdmin = currentUser && post.group && post.group.admin === currentUser._id;
@@ -160,7 +158,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, groupAdminId }: PostCard
           <img
             src={authorAvatar}
             alt={post.user.fullName}
-            className="w-16 h-16 rounded-full border-4 border-indigo-600 object-cover mr-2 bg-gray-900"
+            className="w-12 h-12 rounded-full mr-2 object-cover" // Adjusted size to 12x12
           />
           <div>
             <p className="font-semibold text-white hover:underline">{post.user.fullName}</p>
@@ -172,7 +170,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, groupAdminId }: PostCard
             <button
               onClick={() => setShowMenu(!showMenu)}
               className="p-2 rounded-full text-gray-400 hover:bg-gray-700 transition-colors duration-200"
-              title="Post Options"
+              title="Post Options" // Added title for accessibility
             >
               <MoreVertical size={20} />
             </button>

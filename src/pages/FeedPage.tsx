@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; // Keep React import
 import Header from '../components/Header';
 import LeftSidebar from '../components/LeftSidebar';
 import PostCard from '../components/PostCard';
@@ -13,11 +13,11 @@ interface PostAuthor {
   fullName: string;
   role: string;
   avatar?: string;
-  profilePictureUrl?: string; // UPDATED: Ensure this field is expected from the API
+  profilePictureUrl?: string; // Ensure this field is expected from the API
 }
 
 interface Post {
-  _id:string;
+  _id: string;
   user: PostAuthor;
   title: string;
   description?: string;
@@ -33,7 +33,6 @@ interface Post {
 interface CurrentUser {
     _id: string;
     fullName: string;
-_id: string;
     role: string;
     avatar?: string;
     profilePictureUrl?: string;
@@ -103,14 +102,14 @@ const FeedPage = () => {
   };
 
   // NEW: Add a handler to update a single post's state after a like or comment
-  const handlePostUpdate = (updatedPost: Post) => {
+  const handlePostUpdated = (updatedPost: Post) => { // Corrected prop name to onPostUpdated
     setPosts(prevPosts => 
       prevPosts.map(post => (post._id === updatedPost._id ? updatedPost : post))
     );
   };
 
   return (
-    <div className="bg-gray-900 min-h-screen text-white">
+    <div className="bg-gray-900 min-h-screen text-white flex flex-col">
       <Header />
       <main className="pt-16 container mx-auto px-4">
         <div className="flex flex-col md:flex-row">
@@ -129,7 +128,7 @@ const FeedPage = () => {
                         key={post._id} 
                         post={post} 
                         onPostDeleted={handlePostDeleted}
-                        onPostUpdate={handlePostUpdate} // NEW: Pass handler to card
+                        onPostUpdated={handlePostUpdated} // Corrected prop name
                       />
                     ))}
                   </div>
