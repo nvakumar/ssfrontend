@@ -1,8 +1,6 @@
-<<<<<<< HEAD
-import { useState, useEffect, useRef, useMemo } from 'react';
-=======
+
 // src/components/ChatWindow.tsx
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 >>>>>>> fa3c2a3 (refactor: remove default React import, use hooks-only imports in all components and pages)
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
